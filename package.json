@@ -1,0 +1,15 @@
+{
+  "name": "expense-visual-budget",
+  "version": "1.0.0",
+  "description": "Expense & Visual Budget — client-side SPA",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "2.1.9",
+    "@vitest/coverage-v8": "2.1.9",
+    "jsdom": "25.0.1"
+  }
+}

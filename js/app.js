@@ -438,9 +438,9 @@ function renderSortControls(activeSort) {
   const buttons = document.querySelectorAll('#sort-section [data-sort]');
   buttons.forEach((btn) => {
     if (btn.dataset.sort === activeSort) {
-      btn.classList.add('active');
+      btn.classList.add('active-sort');
     } else {
-      btn.classList.remove('active');
+      btn.classList.remove('active-sort');
     }
   });
 }
@@ -465,6 +465,7 @@ function renderTheme(theme) {
  * The `#notification` element uses `role="alert"` and `aria-live="assertive"`
  * so screen readers announce the message immediately. Visibility is controlled
  * via the `hidden` attribute (present = hidden, absent = visible).
+ * The `data-type` attribute drives the CSS colour rules.
  *
  * @param {string} message - The notification text to display.
  * @param {'error'|'info'} type - Visual style: 'error' for failure messages,
@@ -479,9 +480,8 @@ function showNotification(message, type) {
   // Set the message text
   el.textContent = message;
 
-  // Remove any previously applied type classes and apply the new one
-  el.classList.remove('notification--error', 'notification--info');
-  el.classList.add(`notification--${type}`);
+  // Set data-type attribute — CSS rules target #notification[data-type="error|info"]
+  el.dataset.type = (type === 'error' || type === 'info') ? type : 'info';
 
   // Make the element visible by removing the hidden attribute
   el.removeAttribute('hidden');
@@ -501,7 +501,7 @@ function clearNotification() {
 
   el.setAttribute('hidden', '');
   el.textContent = '';
-  el.classList.remove('notification--error', 'notification--info');
+  delete el.dataset.type;
 }
 
 // === Render Functions ===
@@ -565,11 +565,11 @@ function renderTransactionList(transactions, limits) {
     const formattedDate = new Date(t.date).toLocaleDateString();
 
     li.innerHTML =
-      '<span class="t-name">' + escapeHtml(t.name) + '</span>' +
-      '<span class="t-amount">' + formattedAmount + '</span>' +
-      '<span class="t-category">' + escapeHtml(t.category) + '</span>' +
-      '<span class="t-date">' + formattedDate + '</span>' +
-      '<button class="delete-btn" data-id="' + t.id + '" aria-label="Delete ' + escapeHtml(t.name) + '">Delete</button>';
+      '<span class="tx-name">' + escapeHtml(t.name) + '</span>' +
+      '<span class="tx-amount">' + formattedAmount + '</span>' +
+      '<span class="tx-category">' + escapeHtml(t.category) + '</span>' +
+      '<span class="tx-date">' + formattedDate + '</span>' +
+      '<button class="tx-delete delete-btn" data-id="' + t.id + '" aria-label="Delete ' + escapeHtml(t.name) + '">Delete</button>';
 
     ul.appendChild(li);
   }
@@ -752,3 +752,455 @@ function renderChart(transactions) {
     chartInstance.update();
   }
 }
+
+// === Event Handlers ===
+
+/**
+ * Handle the transaction form submission.
+ *
+ * Flow: validate → mutate state → persist → rollback + notify on failure →
+ *       re-render balance, list, chart.
+ *
+ * Validates: Requirements 1.3, 1.4, 1.5, 1.6, 1.7, 2.3, 2.4, 3.2, 3.3, 4.2, 4.3
+ *
+ * @param {Event} event
+ */
+function handleFormSubmit(event) {
+  event.preventDefault();
+  clearNotification();
+
+  const nameInput     = document.getElementById('item-name');
+  const amountInput   = document.getElementById('item-amount');
+  const categoryInput = document.getElementById('item-category');
+  const formErrors    = document.getElementById('form-errors');
+
+  const name     = nameInput ? nameInput.value : '';
+  const amount   = amountInput ? amountInput.value : '';
+  const category = categoryInput ? categoryInput.value : '';
+
+  // Validate
+  const validation = validateTransaction({ name, amount, category });
+  if (!validation.valid) {
+    if (formErrors) formErrors.textContent = validation.errors.join(' | ');
+    return;
+  }
+  if (formErrors) formErrors.textContent = '';
+
+  // Build transaction object
+  const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Date.now().toString();
+
+  const transaction = {
+    id,
+    name:     name.trim(),
+    amount:   parseFloat(amount),
+    category,
+    date:     new Date().toISOString(),
+  };
+
+  // Mutate state
+  state.transactions.push(transaction);
+
+  // Persist
+  const result = storageSet(STORAGE_KEYS.TRANSACTIONS, state.transactions);
+  if (!result.ok) {
+    // Rollback
+    state.transactions.pop();
+    showNotification('Could not save transaction: storage unavailable.', 'error');
+    return;
+  }
+
+  // Reset form (Req 1.6)
+  if (nameInput)   nameInput.value   = '';
+  if (amountInput) amountInput.value = '';
+
+  // Re-render
+  renderBalance(state.transactions);
+  renderTransactionList(state.transactions, state.limits);
+  renderChart(applyMonthFilter(state.transactions, state.activeMonth));
+}
+
+/**
+ * Handle deletion of a transaction by its ID.
+ *
+ * Flow: remove from state → persist → rollback + notify on failure →
+ *       re-render balance, list, chart.
+ *
+ * Validates: Requirements 2.3, 2.4, 3.3, 4.3
+ *
+ * @param {string} id - The transaction ID to delete.
+ */
+function handleDeleteTransaction(id) {
+  clearNotification();
+
+  const index = state.transactions.findIndex((t) => t.id === id);
+  if (index === -1) return;
+
+  // Snapshot for rollback
+  const removed = state.transactions.splice(index, 1)[0];
+
+  // Persist
+  const result = storageSet(STORAGE_KEYS.TRANSACTIONS, state.transactions);
+  if (!result.ok) {
+    // Rollback
+    state.transactions.splice(index, 0, removed);
+    showNotification('Could not delete transaction: storage unavailable.', 'error');
+    return;
+  }
+
+  // Re-render
+  renderBalance(state.transactions);
+  renderTransactionList(state.transactions, state.limits);
+  renderChart(applyMonthFilter(state.transactions, state.activeMonth));
+}
+
+/**
+ * Handle adding a custom category.
+ *
+ * Flow: validate name → check duplicate/limit → mutate state → persist →
+ *       rollback + notify on failure → re-render selectors.
+ *
+ * Validates: Requirements 6.1, 6.2, 6.3, 6.5, 6.6, 6.7, 6.8
+ */
+function handleAddCustomCategory() {
+  clearNotification();
+
+  const input    = document.getElementById('custom-cat-input');
+  const errorDiv = document.getElementById('custom-cat-error');
+  const name     = input ? input.value : '';
+
+  // Check max custom categories limit (Req 6.7)
+  const customCategories = state.categories.filter(
+    (c) => !DEFAULT_CATEGORIES.includes(c)
+  );
+  if (customCategories.length >= MAX_CUSTOM_CATEGORIES) {
+    if (errorDiv) errorDiv.textContent = 'Maximum of 50 custom categories reached.';
+    return;
+  }
+
+  // Validate name (Req 6.5, 6.6)
+  const validation = validateCategoryName(name, state.categories);
+  if (!validation.valid) {
+    if (errorDiv) errorDiv.textContent = validation.error;
+    return;
+  }
+  if (errorDiv) errorDiv.textContent = '';
+
+  const trimmedName = name.trim();
+
+  // Mutate state
+  state.categories.push(trimmedName);
+
+  // Persist only custom categories (default ones are never stored)
+  const customOnly = state.categories.filter(
+    (c) => !DEFAULT_CATEGORIES.includes(c)
+  );
+  const result = storageSet(STORAGE_KEYS.CATEGORIES, customOnly);
+  if (!result.ok) {
+    // Rollback
+    state.categories.pop();
+    showNotification('Could not save category: storage unavailable.', 'error');
+    return;
+  }
+
+  // Clear input
+  if (input) input.value = '';
+
+  // Re-render selectors (Req 6.2)
+  renderCategorySelectors(state.categories);
+}
+
+/**
+ * Handle setting a spending limit for a category.
+ *
+ * Flow: validate amount → mutate state → persist → rollback + notify on failure →
+ *       re-render list and chart (apply/remove .over-limit).
+ *
+ * Validates: Requirements 9.1, 9.2, 9.5, 9.6
+ */
+function handleSetSpendingLimit() {
+  clearNotification();
+
+  const categorySelect = document.getElementById('limit-category-select');
+  const amountInput    = document.getElementById('limit-amount-input');
+  const errorDiv       = document.getElementById('limit-error');
+
+  const category = categorySelect ? categorySelect.value : '';
+  const amount   = amountInput   ? amountInput.value   : '';
+
+  // Validate amount (Req 9.6)
+  const validation = validateAmount(amount);
+  if (!validation.valid) {
+    if (errorDiv) errorDiv.textContent = validation.error;
+    return;
+  }
+  if (errorDiv) errorDiv.textContent = '';
+
+  const parsedAmount = parseFloat(amount);
+
+  // Snapshot for rollback
+  const previousLimit = state.limits[category];
+
+  // Mutate state
+  state.limits[category] = parsedAmount;
+
+  // Persist
+  const result = storageSet(STORAGE_KEYS.LIMITS, state.limits);
+  if (!result.ok) {
+    // Rollback
+    if (previousLimit === undefined) {
+      delete state.limits[category];
+    } else {
+      state.limits[category] = previousLimit;
+    }
+    showNotification('Could not save spending limit: storage unavailable.', 'error');
+    return;
+  }
+
+  // Clear input
+  if (amountInput) amountInput.value = '';
+
+  // Re-render list and chart to apply/remove .over-limit (Req 9.5, 9.7)
+  renderTransactionList(state.transactions, state.limits);
+  renderChart(applyMonthFilter(state.transactions, state.activeMonth));
+}
+
+/**
+ * Handle month filter change.
+ *
+ * Sets state.activeMonth and re-renders the list and chart.
+ *
+ * Validates: Requirements 7.2, 7.3, 7.5
+ */
+function handleMonthChange() {
+  const picker = document.getElementById('month-picker');
+  state.activeMonth = picker ? picker.value || null : null;
+
+  renderTransactionList(state.transactions, state.limits);
+  renderChart(applyMonthFilter(state.transactions, state.activeMonth));
+}
+
+/**
+ * Handle clearing the month filter.
+ *
+ * Clears state.activeMonth and re-renders the list and chart.
+ *
+ * Validates: Requirements 7.7
+ */
+function handleMonthClear() {
+  state.activeMonth = null;
+
+  const picker = document.getElementById('month-picker');
+  if (picker) picker.value = '';
+
+  renderTransactionList(state.transactions, state.limits);
+  renderChart(applyMonthFilter(state.transactions, state.activeMonth));
+}
+
+/**
+ * Handle a sort button click.
+ *
+ * Sets state.activeSort and re-renders the list and sort controls.
+ *
+ * Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5
+ *
+ * @param {string} sortKey - One of 'amount-asc', 'amount-desc', 'category-az', 'category-za'
+ */
+function handleSortClick(sortKey) {
+  state.activeSort = sortKey;
+
+  renderTransactionList(state.transactions, state.limits);
+  renderSortControls(state.activeSort);
+}
+
+/**
+ * Handle the theme toggle button click.
+ *
+ * Toggles state.theme between 'light' and 'dark', persists the preference,
+ * and re-renders the theme.
+ *
+ * Validates: Requirements 10.1, 10.2, 10.3
+ */
+function handleThemeToggle() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+
+  // Persist (best-effort; if storage unavailable, theme still applies for session)
+  storageSet(STORAGE_KEYS.THEME, state.theme);
+
+  renderTheme(state.theme);
+}
+
+// === Initialisation ===
+
+/**
+ * Initialise the application.
+ *
+ * Order:
+ *  1. Load and apply theme (before any render, Req 10.4, 10.5, 10.6)
+ *  2. Check localStorage availability
+ *  3. Load transactions, custom categories, and limits
+ *  4. Populate state
+ *  5. Render all UI regions
+ *  6. Attach all event listeners
+ *
+ * Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5, 10.4, 10.5, 10.6
+ */
+function init() {
+  // --- 1. Load and apply theme first (Req 10.4, 10.5) ---
+  const themeResult = storageGet(STORAGE_KEYS.THEME);
+  if (themeResult.ok && (themeResult.data === 'light' || themeResult.data === 'dark')) {
+    state.theme = themeResult.data;
+  } else {
+    state.theme = 'light'; // default (Req 10.5)
+  }
+  renderTheme(state.theme);
+
+  // --- 2. Check localStorage availability (Req 5.4, 10.6) ---
+  const storageCheck = isStorageAvailable();
+  if (!storageCheck.ok) {
+    // Initialise with empty state and notify (Req 5.4)
+    state.transactions = [];
+    state.categories   = [...DEFAULT_CATEGORIES];
+    state.limits       = {};
+
+    renderBalance(state.transactions);
+    renderCategorySelectors(state.categories);
+    renderTransactionList(state.transactions, state.limits);
+    renderChart(state.transactions);
+    renderSortControls(state.activeSort);
+
+    showNotification(
+      'Storage is unavailable. Your data will not be saved this session.',
+      'error'
+    );
+
+    attachEventListeners();
+    return;
+  }
+
+  // --- 3. Load transactions ---
+  let loadError = false;
+
+  const txResult = storageGet(STORAGE_KEYS.TRANSACTIONS);
+  if (!txResult.ok) {
+    loadError = true;
+    state.transactions = [];
+  } else if (!Array.isArray(txResult.data)) {
+    if (txResult.data !== null) loadError = true;
+    state.transactions = [];
+  } else {
+    state.transactions = txResult.data;
+  }
+
+  // --- 4. Load custom categories ---
+  const catResult = storageGet(STORAGE_KEYS.CATEGORIES);
+  let customCategories = [];
+  if (!catResult.ok) {
+    loadError = true;
+  } else if (Array.isArray(catResult.data)) {
+    customCategories = catResult.data;
+  } else if (catResult.data !== null) {
+    loadError = true;
+  }
+  state.categories = [...DEFAULT_CATEGORIES, ...customCategories];
+
+  // --- 5. Load spending limits ---
+  const limitsResult = storageGet(STORAGE_KEYS.LIMITS);
+  if (!limitsResult.ok) {
+    loadError = true;
+    state.limits = {};
+  } else if (limitsResult.data !== null && typeof limitsResult.data === 'object' && !Array.isArray(limitsResult.data)) {
+    state.limits = limitsResult.data;
+  } else if (limitsResult.data !== null) {
+    loadError = true;
+    state.limits = {};
+  } else {
+    state.limits = {};
+  }
+
+  // --- 6. Render all UI regions ---
+  renderBalance(state.transactions);
+  renderCategorySelectors(state.categories);
+  renderTransactionList(state.transactions, state.limits);
+  renderChart(applyMonthFilter(state.transactions, state.activeMonth));
+  renderSortControls(state.activeSort);
+
+  // --- 7. Show error notification if any load failed (Req 5.4) ---
+  if (loadError) {
+    showNotification(
+      'Some data could not be loaded from storage. Starting with available data.',
+      'error'
+    );
+  }
+
+  // --- 8. Attach event listeners ---
+  attachEventListeners();
+}
+
+/**
+ * Attach all DOM event listeners.
+ * Called once from init().
+ */
+function attachEventListeners() {
+  // Transaction form submit
+  const form = document.getElementById('transaction-form');
+  if (form) {
+    form.addEventListener('submit', handleFormSubmit);
+  }
+
+  // Delete transaction — event delegation on #transaction-list (Req 2.3)
+  const txList = document.getElementById('transaction-list');
+  if (txList) {
+    txList.addEventListener('click', (event) => {
+      const btn = event.target.closest('.delete-btn');
+      if (btn && btn.dataset.id) {
+        handleDeleteTransaction(btn.dataset.id);
+      }
+    });
+  }
+
+  // Add custom category
+  const customCatBtn = document.getElementById('custom-cat-btn');
+  if (customCatBtn) {
+    customCatBtn.addEventListener('click', handleAddCustomCategory);
+  }
+
+  // Set spending limit
+  const limitSaveBtn = document.getElementById('limit-save-btn');
+  if (limitSaveBtn) {
+    limitSaveBtn.addEventListener('click', handleSetSpendingLimit);
+  }
+
+  // Month filter change
+  const monthPicker = document.getElementById('month-picker');
+  if (monthPicker) {
+    monthPicker.addEventListener('change', handleMonthChange);
+  }
+
+  // Clear month filter
+  const monthClearBtn = document.getElementById('month-clear-btn');
+  if (monthClearBtn) {
+    monthClearBtn.addEventListener('click', handleMonthClear);
+  }
+
+  // Sort buttons — event delegation on #sort-section
+  const sortSection = document.getElementById('sort-section');
+  if (sortSection) {
+    sortSection.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-sort]');
+      if (btn && btn.dataset.sort) {
+        handleSortClick(btn.dataset.sort);
+      }
+    });
+  }
+
+  // Theme toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', handleThemeToggle);
+  }
+}
+
+// Bootstrap the application when the DOM is ready (Req 5.1, 10.4)
+document.addEventListener('DOMContentLoaded', init);
