@@ -1,0 +1,508 @@
+/* css/style.css — Expense & Visual Budget styles */
+
+/* ============================================================
+   1. CSS Custom Properties — Light Theme (default)
+   Requirements: 10.2, 10.4, 10.5
+   ============================================================ */
+:root {
+  /* Backgrounds */
+  --bg: #ffffff;
+  --card: #f5f5f5;
+  --input-bg: #ffffff;
+  --header-bg: #f0f0f0;
+
+  /* Text */
+  --text: #111111;
+  --text-muted: #555555;
+  --text-inverse: #ffffff;
+
+  /* Borders & Dividers */
+  --border: #dddddd;
+
+  /* Brand / Accent */
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+
+  /* Status */
+  --error: #d32f2f;
+  --error-bg: #fdecea;
+  --success: #388e3c;
+  --success-bg: #e8f5e9;
+  --info: #0288d1;
+  --info-bg: #e1f5fe;
+
+  /* Over-limit indicator */
+  --over-limit-bg: #fff3e0;
+  --over-limit-border: #e65100;
+  --over-limit-text: #bf360c;
+
+  /* Notification */
+  --notification-error-bg: #d32f2f;
+  --notification-info-bg: #0288d1;
+  --notification-text: #ffffff;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Typography */
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-size-base: 16px;
+  --font-size-sm: 14px;
+  --font-size-lg: 20px;
+  --font-size-xl: 28px;
+
+  /* Borders */
+  --radius: 6px;
+  --radius-lg: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  /* Transitions */
+  --transition-theme: background-color 100ms ease, color 100ms ease;
+  --transition-ui: 150ms ease;
+}
+
+/* ============================================================
+   2. Dark Theme Overrides
+   Requirements: 10.2, 10.4
+   ============================================================ */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --input-bg: #0f3460;
+  --header-bg: #16213e;
+
+  /* Text */
+  --text: #eeeeee;
+  --text-muted: #aaaaaa;
+  --text-inverse: #111111;
+
+  /* Borders & Dividers */
+  --border: #2a2a4a;
+
+  /* Brand / Accent */
+  --accent: #6ab0f5;
+  --accent-hover: #4a90e2;
+
+  /* Status */
+  --error: #ef9a9a;
+  --error-bg: #4a1010;
+  --success: #a5d6a7;
+  --success-bg: #1b3a1c;
+  --info: #81d4fa;
+  --info-bg: #0a2a3a;
+
+  /* Over-limit indicator */
+  --over-limit-bg: #3e2000;
+  --over-limit-border: #ff6d00;
+  --over-limit-text: #ffab40;
+
+  /* Notification */
+  --notification-error-bg: #b71c1c;
+  --notification-info-bg: #01579b;
+  --notification-text: #ffffff;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================
+   3. Base Reset & Body
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  background-color: var(--bg);
+  color: var(--text);
+  /* Smooth theme switch within 100 ms — Requirements: 10.2, 9.3, 9.4 */
+  transition: var(--transition-theme);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   4. Layout
+   ============================================================ */
+header {
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 100ms ease, border-color 100ms ease;
+}
+
+header h1 {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text);
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+section {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 100ms ease, border-color 100ms ease;
+}
+
+/* ============================================================
+   5. Theme Toggle Button
+   ============================================================ */
+#theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  color: var(--text);
+  background-color: var(--input-bg);
+  transition: background-color var(--transition-ui), border-color var(--transition-ui),
+    color var(--transition-ui);
+}
+
+#theme-toggle:hover {
+  background-color: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+}
+
+/* ============================================================
+   6. Balance Section
+   ============================================================ */
+#balance-section {
+  text-align: center;
+}
+
+#balance-display {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ============================================================
+   7. Forms & Inputs
+   ============================================================ */
+form,
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: flex-start;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="month"],
+select {
+  background-color: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  transition: border-color var(--transition-ui), background-color 100ms ease,
+    color 100ms ease;
+  flex: 1 1 120px;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="month"]:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+button {
+  background-color: var(--accent);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: background-color var(--transition-ui);
+  white-space: nowrap;
+}
+
+button:hover {
+  background-color: var(--accent-hover);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Error / validation messages */
+#form-errors,
+#custom-cat-error,
+#limit-error,
+#monthly-error {
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+  min-height: 1.2em;
+}
+
+/* ============================================================
+   8. Transaction List
+   ============================================================ */
+#transaction-list {
+  list-style: none;
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 100ms ease, border-color 100ms ease;
+}
+
+#transaction-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  transition: background-color 100ms ease, border-color 100ms ease,
+    color 100ms ease;
+}
+
+#transaction-list li .tx-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#transaction-list li .tx-amount {
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+#transaction-list li .tx-category {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+#transaction-list li .tx-date {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+#transaction-list li .tx-delete {
+  background: none;
+  border: 1px solid var(--error);
+  color: var(--error);
+  border-radius: var(--radius);
+  padding: 2px var(--space-xs);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-ui), color var(--transition-ui);
+  flex-shrink: 0;
+}
+
+#transaction-list li .tx-delete:hover {
+  background-color: var(--error);
+  color: var(--text-inverse);
+}
+
+/* Empty-state message */
+#transaction-list .empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-lg);
+  font-style: italic;
+}
+
+/* ============================================================
+   9. Over-Limit Visual Indicator
+   Requirements: 9.3, 9.4, 9.5, 9.7
+   Applied to transaction list items AND chart segments when
+   spending for a category meets or exceeds its spending limit.
+   ============================================================ */
+.over-limit {
+  background-color: var(--over-limit-bg) !important;
+  border-color: var(--over-limit-border) !important;
+  color: var(--over-limit-text) !important;
+  /* Ensure the indicator is visually distinct from default appearance */
+  box-shadow: 0 0 0 2px var(--over-limit-border);
+  transition: background-color 100ms ease, border-color 100ms ease,
+    color 100ms ease, box-shadow 100ms ease;
+}
+
+/* Override child text colours inside over-limit items */
+.over-limit .tx-name,
+.over-limit .tx-amount,
+.over-limit .tx-category,
+.over-limit .tx-date {
+  color: var(--over-limit-text) !important;
+}
+
+/* ============================================================
+   10. Sort Controls
+   ============================================================ */
+#sort-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+#sort-section button {
+  background-color: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-sm);
+  transition: background-color var(--transition-ui), color var(--transition-ui),
+    border-color var(--transition-ui);
+}
+
+#sort-section button:hover {
+  background-color: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+}
+
+/* Active sort button — distinct visual marker (Requirement 8.4) */
+#sort-section button.active-sort {
+  background-color: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* ============================================================
+   11. Chart Section
+   ============================================================ */
+#chart-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+#spending-chart {
+  max-width: 400px;
+  width: 100%;
+}
+
+#chart-placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-lg);
+}
+
+/* ============================================================
+   12. Global Notification
+   ============================================================ */
+#notification {
+  position: fixed;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--notification-text);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  max-width: 320px;
+  word-break: break-word;
+  transition: opacity var(--transition-ui);
+}
+
+#notification[data-type="error"] {
+  background-color: var(--notification-error-bg);
+}
+
+#notification[data-type="info"] {
+  background-color: var(--notification-info-bg);
+}
+
+/* ============================================================
+   13. Responsive Adjustments
+   ============================================================ */
+@media (max-width: 600px) {
+  main {
+    padding: var(--space-md);
+    gap: var(--space-md);
+  }
+
+  header {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  header h1 {
+    font-size: var(--font-size-lg);
+  }
+
+  form,
+  .form-row {
+    flex-direction: column;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="month"],
+  select {
+    flex: 1 1 100%;
+  }
+
+  #sort-section {
+    flex-direction: column;
+  }
+
+  #notification {
+    left: var(--space-md);
+    right: var(--space-md);
+    bottom: var(--space-md);
+    max-width: none;
+  }
+}
