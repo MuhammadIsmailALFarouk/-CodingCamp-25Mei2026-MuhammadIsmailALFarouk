@@ -175,46 +175,46 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - Populate `state`, render all UI regions, attach all event listeners
     - Handle localStorage unavailability and malformed data gracefully; show error notification and initialise with empty state
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 10.4, 10.5, 10.6_
-- [ ] 10. Write unit tests for pure functions
-  - [ ]* 10.1 Write unit tests for `computeBalance`
+- [x] 10. Write unit tests for pure functions
+  - [x] 10.1 Write unit tests for `computeBalance`
     - Test: empty list → 0; single item; multiple items; floating-point precision
     - _Requirements: 3.1, 3.4_
 
-  - [ ]* 10.2 Write unit tests for `computeCategoryTotals`
+  - [x] 10.2 Write unit tests for `computeCategoryTotals`
     - Test: grouping correctness; zero-amount exclusion
     - _Requirements: 4.1, 4.8_
 
-  - [ ]* 10.3 Write unit tests for `validateTransaction` and `validateAmount`
+  - [x] 10.3 Write unit tests for `validateTransaction` and `validateAmount`
     - Test all valid/invalid combinations; boundary values: 0, 0.01, 999999999.99, 1000000000
     - _Requirements: 1.4, 1.5_
 
-  - [ ]* 10.4 Write unit tests for `validateCategoryName`
+  - [x] 10.4 Write unit tests for `validateCategoryName`
     - Test: empty, whitespace, duplicate (case-insensitive), valid, > 50 chars
     - _Requirements: 6.5, 6.6, 6.7_
 
-  - [ ]* 10.5 Write unit tests for `applySort`
+  - [x] 10.5 Write unit tests for `applySort`
     - Test each of the four sort keys; empty list; single item
     - _Requirements: 8.1, 8.2_
 
-  - [ ]* 10.6 Write unit tests for `applyMonthFilter`
+  - [x] 10.6 Write unit tests for `applyMonthFilter`
     - Test: matching, non-matching, boundary dates, null month returns all
     - _Requirements: 7.2, 7.5_
 
-  - [ ]* 10.7 Write unit tests for `isOverLimit`
+  - [x] 10.7 Write unit tests for `isOverLimit`
     - Test: at limit, below limit, above limit, no limit set
     - _Requirements: 9.3, 9.5_
 
-- [ ] 11. Write integration and smoke tests
-  - [ ]* 11.1 Write smoke tests for app load with and without localStorage
+- [x] 11. Write integration and smoke tests
+  - [x] 11.1 Write smoke tests for app load with and without localStorage
     - Test: app loads without errors when localStorage is available
     - Test: app loads without errors when localStorage is unavailable (private mode simulation)
     - _Requirements: 5.4, 10.6_
 
-  - [ ]* 11.2 Write integration test for full add → persist → reload → verify cycle
+  - [x] 11.2 Write integration test for full add → persist → reload → verify cycle
     - Use a real localStorage mock; add a transaction, simulate reload, verify transaction is present and balance is correct
     - _Requirements: 5.1, 5.2, 5.3_
 
-  - [ ]* 11.3 Write integration test for theme persistence across simulated page reloads
+  - [x] 11.3 Write integration test for theme persistence across simulated page reloads
     - Toggle theme, simulate reload, verify theme is applied before any render
     - _Requirements: 10.3, 10.4_
 
@@ -245,8 +245,8 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     { "id": 7, "tasks": ["7.1", "7.2", "7.3", "7.4", "7.5"] },
     { "id": 8, "tasks": ["8.1", "8.4", "8.5", "8.6"] },
     { "id": 9, "tasks": ["8.2", "8.3"] },
-    { "id": 10, "tasks": ["10.1", "10.2", "10.3", "10.4", "10.5", "10.6", "10.7"] },
-    { "id": 11, "tasks": ["11.1", "11.2", "11.3"] }
+    { "id": 10, "tasks": ["10.1", "10.2", "10.3", "10.4", "10.5", "10.6", "10.7"], "status": "complete" },
+    { "id": 11, "tasks": ["11.1", "11.2", "11.3"], "status": "complete" }
   ]
 }
 ```

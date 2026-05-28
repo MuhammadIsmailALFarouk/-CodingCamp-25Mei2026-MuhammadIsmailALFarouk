@@ -51,6 +51,11 @@ export function validateAmount(value) {
     return { valid: false, error: 'Amount is required' };
   }
 
+  // Reject strings that are not purely numeric (e.g. '12abc')
+  if (typeof value === 'string' && !/^\s*-?\d+(\.\d+)?\s*$/.test(value)) {
+    return { valid: false, error: 'Amount must be a number' };
+  }
+
   const num = parseFloat(value);
   if (isNaN(num) || !isFinite(num)) {
     return { valid: false, error: 'Amount must be a number' };
@@ -121,7 +126,8 @@ export function computeCategoryTotals(transactions) {
     return {};
   }
 
-  const totals = {};
+  // Use Object.create(null) to avoid prototype key collisions (e.g. 'constructor')
+  const totals = Object.create(null);
 
   for (const t of transactions) {
     if (totals[t.category] === undefined) {
@@ -136,7 +142,8 @@ export function computeCategoryTotals(transactions) {
     }
   }
 
-  return totals;
+  // Return a plain object so callers can use standard object methods
+  return Object.assign({}, totals);
 }
 
 /**
