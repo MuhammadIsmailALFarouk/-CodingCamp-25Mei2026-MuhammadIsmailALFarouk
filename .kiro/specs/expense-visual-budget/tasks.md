@@ -63,8 +63,8 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - Use fast-check: generate a list of category names; attempt to add a duplicate in any case variant; assert `validateCategoryName` returns `valid: false` and list is unchanged
     - Tag: `// Feature: expense-visual-budget, Property 8: Custom category name uniqueness (case-insensitive)`
 
-- [ ] 5. Implement business logic / computation functions
-  - [ ] 5.1 Implement `computeBalance` and `computeCategoryTotals`
+- [x] 5. Implement business logic / computation functions
+  - [x] 5.1 Implement `computeBalance` and `computeCategoryTotals`
     - `computeBalance(transactions)` → sum of all `amount` fields; return `0` for empty list
     - `computeCategoryTotals(transactions)` → `{ [category]: number }` map; exclude zero-amount categories
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 4.1, 4.8_
@@ -81,7 +81,7 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - Use fast-check: generate arbitrary `Transaction[]`; assert `computeCategoryTotals` result keys exactly match categories with positive totals
     - Tag: `// Feature: expense-visual-budget, Property 6: Chart segments reflect category totals proportionally`
 
-  - [ ] 5.4 Implement `applySort` and `applyMonthFilter`
+  - [x] 5.4 Implement `applySort` and `applyMonthFilter`
     - `applySort(transactions, sortKey)` → new sorted array (does not mutate); support `amount-asc`, `amount-desc`, `category-az`, `category-za`
     - `applyMonthFilter(transactions, monthStr)` → array filtered to `'YYYY-MM'`; return all transactions when `monthStr` is null
     - _Requirements: 7.2, 7.5, 8.1, 8.2, 8.5_
@@ -98,7 +98,7 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - Use fast-check: generate `Transaction[]` with random ISO dates and a random `'YYYY-MM'`; assert `applyMonthFilter` returns exactly the matching subset
     - Tag: `// Feature: expense-visual-budget, Property 7: Monthly filter returns only transactions in the selected month`
 
-  - [ ] 5.7 Implement `isOverLimit`
+  - [x] 5.7 Implement `isOverLimit`
     - `isOverLimit(category, totals, limits)` → `boolean`; return `false` when no limit is set for the category
     - _Requirements: 9.3, 9.4, 9.5, 9.7_
 
@@ -108,30 +108,30 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - Use fast-check: generate transactions and a limit; assert `isOverLimit` returns `true` iff category total ≥ limit
     - Tag: `// Feature: expense-visual-budget, Property 9: Spending limit alert consistency`
 
-- [ ] 6. Checkpoint — Ensure all tests pass
+- [~] 6. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. Implement render functions
-  - [ ] 7.1 Implement `renderBalance` and `renderCategorySelectors`
+  - [-] 7.1 Implement `renderBalance` and `renderCategorySelectors`
     - `renderBalance(transactions)`: update `#balance-display` with formatted currency sum
     - `renderCategorySelectors(categories)`: rebuild `<select>` options in `#item-category` and `#limit-category-select` from `state.categories`
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 6.2, 6.4_
 
-  - [ ] 7.2 Implement `renderTransactionList`
+  - [-] 7.2 Implement `renderTransactionList`
     - Build `<li>` elements for each transaction showing name, amount, category, date, and a delete button
     - Apply `.over-limit` class to items whose category total meets or exceeds its limit
     - Show empty-state message when list is empty
     - Apply current `state.activeSort` and `state.activeMonth` before rendering
     - _Requirements: 2.1, 2.2, 2.5, 8.3, 9.3_
 
-  - [ ] 7.3 Implement `renderChart`
+  - [-] 7.3 Implement `renderChart`
     - Create Chart.js pie chart instance once on init; update `chart.data` and call `chart.update()` on subsequent renders
     - Show `#chart-placeholder` and hide `<canvas>` when no transactions exist
     - Apply `.over-limit` styling to segments whose category is over limit
     - Include legend with category name, unique colour, and percentage share
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.8, 9.4_
 
-  - [ ] 7.4 Implement `renderSortControls` and `renderTheme`
+  - [-] 7.4 Implement `renderSortControls` and `renderTheme`
     - `renderSortControls(activeSort)`: highlight the active sort button with a distinct visual marker
     - `renderTheme(theme)`: set `document.body.dataset.theme` to `'light'` or `'dark'`
     - _Requirements: 8.4, 10.2_
@@ -142,7 +142,7 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - _Requirements: 1.7, 2.4, 5.4, 6.8_
 
 - [ ] 8. Implement event handlers and `init`
-  - [ ] 8.1 Implement `handleFormSubmit` and `handleDeleteTransaction`
+  - [~] 8.1 Implement `handleFormSubmit` and `handleDeleteTransaction`
     - `handleFormSubmit`: validate input → mutate state → persist → rollback + notify on storage failure → re-render balance, list, chart
     - `handleDeleteTransaction(id)`: remove from state → persist → rollback + notify on failure → re-render balance, list, chart
     - _Requirements: 1.3, 1.4, 1.5, 1.6, 1.7, 2.3, 2.4, 3.2, 3.3, 4.2, 4.3_
@@ -159,25 +159,25 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - Use fast-check: generate a non-empty list; pick a random transaction; call `handleDeleteTransaction` logic; assert the `id` is absent and length decreased by 1
     - Tag: `// Feature: expense-visual-budget, Property 5: Deleting a transaction removes it from the list`
 
-  - [ ] 8.4 Implement `handleAddCustomCategory` and `handleSetSpendingLimit`
+  - [~] 8.4 Implement `handleAddCustomCategory` and `handleSetSpendingLimit`
     - `handleAddCustomCategory`: validate name → check duplicate/limit → mutate state → persist → rollback + notify on failure → re-render selectors
     - `handleSetSpendingLimit`: validate amount → mutate state → persist → rollback + notify on failure → re-render list and chart (apply/remove `.over-limit`)
     - _Requirements: 6.1, 6.2, 6.3, 6.5, 6.6, 6.7, 6.8, 9.1, 9.2, 9.5, 9.6_
 
-  - [ ] 8.5 Implement `handleMonthChange`, `handleMonthClear`, `handleSortClick`, and `handleThemeToggle`
+  - [~] 8.5 Implement `handleMonthChange`, `handleMonthClear`, `handleSortClick`, and `handleThemeToggle`
     - `handleMonthChange`: set `state.activeMonth` → re-render list and chart
     - `handleMonthClear`: clear `state.activeMonth` → re-render list and chart
     - `handleSortClick(sortKey)`: set `state.activeSort` → re-render list and sort controls
     - `handleThemeToggle`: toggle `state.theme` → persist → re-render theme
     - _Requirements: 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 8.1, 8.2, 8.3, 8.4, 8.5, 10.1, 10.2, 10.3_
 
-  - [ ] 8.6 Implement `init` and attach all event listeners
+  - [~] 8.6 Implement `init` and attach all event listeners
     - Load theme first (apply before any render), then load transactions/categories/limits from localStorage
     - Populate `state`, render all UI regions, attach all event listeners
     - Handle localStorage unavailability and malformed data gracefully; show error notification and initialise with empty state
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 10.4, 10.5, 10.6_
 
-- [ ] 9. Checkpoint — Ensure all tests pass
+- [~] 9. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 10. Write unit tests for pure functions
@@ -223,7 +223,7 @@ Implement a fully client-side SPA using HTML, CSS, and Vanilla JavaScript. The a
     - Toggle theme, simulate reload, verify theme is applied before any render
     - _Requirements: 10.3, 10.4_
 
-- [ ] 12. Final checkpoint — Ensure all tests pass
+- [~] 12. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ---
