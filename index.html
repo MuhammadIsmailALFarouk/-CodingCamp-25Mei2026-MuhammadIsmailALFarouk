@@ -3,79 +3,213 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Expense &amp; Visual Budget</title>
+  <title>BudgetVis — Expense &amp; Visual Budget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body data-theme="light">
+<body data-theme="dark">
+
+  <!-- Animated background blobs -->
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
   <header>
-    <h1>Expense &amp; Visual Budget</h1>
-    <button id="theme-toggle">🌙 / ☀️</button>
+    <div class="header-brand">
+      <div class="brand-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="14" fill="url(#logoGrad)"/>
+          <text x="14" y="19" text-anchor="middle" font-size="14" fill="white">💰</text>
+          <defs>
+            <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
+              <stop offset="0%" stop-color="#a78bfa"/>
+              <stop offset="100%" stop-color="#60a5fa"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>BudgetVis</h1>
+        <span class="brand-tagline">Smart Expense Tracker</span>
+      </div>
+    </div>
+    <button id="theme-toggle" aria-label="Toggle theme">
+      <span class="toggle-track">
+        <span class="toggle-thumb"></span>
+        <span class="toggle-icon-sun">☀️</span>
+        <span class="toggle-icon-moon">🌙</span>
+      </span>
+    </button>
   </header>
 
+  <!-- ── Global notification ────────────────────────────────── -->
+  <div id="notification" role="alert" aria-live="assertive" hidden></div>
+
   <main>
-    <!-- Balance -->
+
+    <!-- ── Balance Hero ───────────────────────────────────────── -->
     <section id="balance-section">
-      <span id="balance-display">$0.00</span>
+      <div class="balance-eyebrow">Total Spending</div>
+      <div id="balance-display">$0.00</div>
+      <div class="balance-meta">
+        <span class="balance-badge">
+          <span class="pulse-dot"></span>
+          Live tracking
+        </span>
+      </div>
     </section>
 
-    <!-- Input Form -->
-    <section id="form-section">
-      <form id="transaction-form">
-        <input id="item-name" type="text" placeholder="Item name" />
-        <input id="item-amount" type="number" step="0.01" min="0.01" />
-        <select id="item-category">
-          <option>Food</option>
-          <option>Transport</option>
-          <option>Fun</option>
-          <!-- custom categories appended here -->
-        </select>
-        <button type="submit">Add</button>
-      </form>
-      <div id="form-errors" aria-live="polite"></div>
-    </section>
+    <!-- ── Top Row: Form + Chart ──────────────────────────────── -->
+    <div class="grid-2">
 
-    <!-- Custom Category -->
-    <section id="custom-category-section">
-      <input id="custom-cat-input" type="text" maxlength="50" />
-      <button id="custom-cat-btn">Add Category</button>
-      <div id="custom-cat-error" aria-live="polite"></div>
-    </section>
+      <!-- Add Transaction -->
+      <div class="glass-card" id="form-section">
+        <div class="card-title">
+          <span class="card-title-icon">✦</span>
+          Add Transaction
+        </div>
+        <form id="transaction-form" autocomplete="off">
+          <div class="field-group">
+            <label for="item-name">Item Name</label>
+            <input id="item-name" type="text" placeholder="e.g. Coffee, Groceries…" />
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label for="item-amount">Amount</label>
+              <div class="input-with-prefix">
+                <span class="prefix-symbol">$</span>
+                <input id="item-amount" type="number" step="0.01" min="0.01" placeholder="0.00" />
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="item-category">Category</label>
+              <select id="item-category">
+                <option>Food</option>
+                <option>Transport</option>
+                <option>Fun</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-gradient">
+            <span>Add Transaction</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </form>
+        <div id="form-errors" class="inline-error" aria-live="polite"></div>
+      </div>
 
-    <!-- Spending Limits -->
-    <section id="limits-section">
-      <select id="limit-category-select"></select>
-      <input id="limit-amount-input" type="number" step="0.01" min="0.01" />
-      <button id="limit-save-btn">Set Limit</button>
-      <div id="limit-error" aria-live="polite"></div>
-    </section>
+      <!-- Chart -->
+      <div class="glass-card" id="chart-section">
+        <div class="card-title">
+          <span class="card-title-icon">◈</span>
+          Spending Breakdown
+        </div>
+        <div class="chart-container">
+          <canvas id="spending-chart"></canvas>
+          <div id="chart-placeholder" hidden>
+            <div class="empty-chart-art">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="36" stroke="url(#emptyGrad)" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+                <circle cx="40" cy="40" r="20" fill="url(#emptyGrad)" opacity="0.1"/>
+                <text x="40" y="46" text-anchor="middle" font-size="20">📊</text>
+                <defs>
+                  <linearGradient id="emptyGrad" x1="0" y1="0" x2="80" y2="80">
+                    <stop offset="0%" stop-color="#a78bfa"/>
+                    <stop offset="100%" stop-color="#60a5fa"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <p>No data yet</p>
+            <span>Add your first transaction to visualise spending</span>
+          </div>
+        </div>
+      </div>
 
-    <!-- Monthly Summary -->
-    <section id="monthly-section">
-      <input id="month-picker" type="month" />
-      <button id="month-clear-btn">Show All</button>
-      <div id="monthly-error" aria-live="polite"></div>
-    </section>
+    </div>
 
-    <!-- Sort Controls -->
-    <section id="sort-section">
-      <button data-sort="amount-asc">Amount ↑</button>
-      <button data-sort="amount-desc">Amount ↓</button>
-      <button data-sort="category-az">Category A–Z</button>
-      <button data-sort="category-za">Category Z–A</button>
-    </section>
+    <!-- ── Settings Row ───────────────────────────────────────── -->
+    <div class="grid-3">
 
-    <!-- Transaction List -->
-    <ul id="transaction-list" aria-label="Transaction list"></ul>
+      <!-- Custom Category -->
+      <div class="glass-card glass-card--sm" id="custom-category-section">
+        <div class="card-title card-title--sm">
+          <span class="card-title-icon">🏷</span>
+          New Category
+        </div>
+        <div class="field-group">
+          <label for="custom-cat-input">Name</label>
+          <input id="custom-cat-input" type="text" maxlength="50" placeholder="e.g. Health, Travel…" />
+        </div>
+        <button id="custom-cat-btn" class="btn-outline">+ Add Category</button>
+        <div id="custom-cat-error" class="inline-error" aria-live="polite"></div>
+      </div>
 
-    <!-- Chart -->
-    <section id="chart-section">
-      <canvas id="spending-chart"></canvas>
-      <p id="chart-placeholder" hidden>No data to display</p>
-    </section>
+      <!-- Spending Limits -->
+      <div class="glass-card glass-card--sm" id="limits-section">
+        <div class="card-title card-title--sm">
+          <span class="card-title-icon">🎯</span>
+          Spending Limit
+        </div>
+        <div class="field-group">
+          <label for="limit-category-select">Category</label>
+          <select id="limit-category-select"></select>
+        </div>
+        <div class="field-group">
+          <label for="limit-amount-input">Limit</label>
+          <div class="input-with-prefix">
+            <span class="prefix-symbol">$</span>
+            <input id="limit-amount-input" type="number" step="0.01" min="0.01" placeholder="0.00" />
+          </div>
+        </div>
+        <button id="limit-save-btn" class="btn-outline">Set Limit</button>
+        <div id="limit-error" class="inline-error" aria-live="polite"></div>
+      </div>
+
+      <!-- Monthly Filter -->
+      <div class="glass-card glass-card--sm" id="monthly-section">
+        <div class="card-title card-title--sm">
+          <span class="card-title-icon">📅</span>
+          Filter by Month
+        </div>
+        <div class="field-group">
+          <label for="month-picker">Month</label>
+          <input id="month-picker" type="month" />
+        </div>
+        <button id="month-clear-btn" class="btn-ghost">↩ Show All</button>
+        <div id="monthly-error" class="inline-error" aria-live="polite"></div>
+      </div>
+
+    </div>
+
+    <!-- ── Transaction List ───────────────────────────────────── -->
+    <div class="glass-card" id="list-section">
+      <div class="list-toolbar">
+        <div class="card-title">
+          <span class="card-title-icon">≡</span>
+          Transactions
+        </div>
+        <div id="sort-section" role="group" aria-label="Sort transactions">
+          <span class="sort-label">Sort</span>
+          <button data-sort="amount-asc"  class="sort-chip">$ ↑</button>
+          <button data-sort="amount-desc" class="sort-chip">$ ↓</button>
+          <button data-sort="category-az" class="sort-chip">Z-A</button>
+          <button data-sort="category-za" class="sort-chip">A-Z</button>
+        </div>
+      </div>
+      <ul id="transaction-list" aria-label="Transaction list"></ul>
+    </div>
+
   </main>
 
-  <!-- Global notification -->
-  <div id="notification" role="alert" aria-live="assertive" hidden></div>
+  <footer>
+    <span>BudgetVis © 2025</span>
+    <span class="footer-dot">·</span>
+    <span>All data stored locally in your browser</span>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="js/app.js"></script>
